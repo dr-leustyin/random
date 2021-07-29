@@ -18,6 +18,7 @@ class TestWeapon
     @attack_damage = []
     @target_dead = false
     @weapon = right_hand
+    @start_time = Time.now.to_i
     
     @hit_map = {
       "light hit" => 1,
@@ -52,7 +53,7 @@ class TestWeapon
   
   def execute
     @attack_count.times do 
-      bput(@attack_type,"Roundtime")
+      bput(@attack_type,"Roundtime","What are you trying to attack")
       waitrt?
       if Flags['attack_hit']
         strike_weight = @hit_map[Flags['attack_hit'][1]]
@@ -67,25 +68,31 @@ class TestWeapon
         @misses = @misses + 1
         Flags.reset('attack_miss')
       end
-      return if Flags['target_slain']
+      if Flags['target_slain']
+        @target_dead = true
+        return
+      end
     end
   end
   
   def report
     @attack_damage = [0] if @attack_damage.size==0        #Prevent divide by zero in report
+    swings = @hits + @misses
     
     echo "******************** TEST COMPLETE ********************"
     echo ""
-    echo "Attack: #{@attack_type}"
-    echo "Swings: #{@hits + @misses}"
-    echo "Weapon: #{@weapon}"
+    echo " Attack: #{@attack_type}"
+    echo " Swings: #{swings}"
+    echo " Weapon: #{@weapon}"
     echo ""
-    echo "# Hits: #{@hits}"
-    echo "# Miss: #{@misses}"
-    echo "Hit %:  #{(100.0 * @hits / @attack_count).round(2)}"
+    echo " # Hits: #{@hits}"
+    echo " # Miss: #{@misses}"
+    echo "  Hit %:  #{(100.0 * @hits / swings).round(2)}"
     echo "Min Hit: #{@attack_damage.min}"
     echo "Max Hit: #{@attack_damage.max}"
     echo "Avg Hit: #{(1.0 * @attack_damage.sum / @attack_damage.size).round(2)}"
+    echo "    TTK: #{Time.now.to_i - @start_time} seconds" if @target_dead
+    echo ""
     echo "*******************************************************"
   end
 end
