@@ -55,8 +55,6 @@ class TestWeapon
       bput(@attack_type,"Roundtime")
       waitrt?
       if Flags['attack_hit']
-        echo Flags['attack_hit']
-        Flags['attack_hit'][1]
         strike_weight = @hit_map[Flags['attack_hit'][1]]
         strike_weight = 0 if strike_weight.nil?
         echo "*** Hit for #{strike_weight}"
