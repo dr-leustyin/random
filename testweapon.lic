@@ -1,0 +1,100 @@
+custom_require.call(%w[common drinfomon events ])
+
+Flags.add('target_slain', /([a-zA-Z])* is slain before your eyes!/i,/slumps unconscious, you back off.  The challenge is satisfied/)
+Flags.add('attack_hit',/The .+ lands an? ([a-z]+ [a-z]+) (to|that)/)
+Flags.add('attack_miss','managing to get out of the way with a minimum of effort','dodges','evades','blocks','deflects','repulses','counters',/(fends|beats) off/,/(turns|knocks) aside/,/(slaps|turns) away/)
+
+class TestWeapon
+  include DRC
+  
+  def initialize
+    # Configuration variables
+    @attack_type = "draw"                 # The attack to use
+    @attack_count = 30                    # Number of attacks to execute
+  
+    # Status variables
+    @hits = 0
+    @misses = 0
+    @attack_damage = []
+    @target_dead = false
+    @weapon = right_hand
+    
+    @hit_map = {
+      "light hit" => 1,
+      "good hit" => 2,
+      "good strike" => 3,
+      "solid hit" => 4,
+      "hard hit" => 5,
+      "strong hit" => 6,
+      "heavy strike" => 7,
+      "very heavy hit" => 8,
+      "extremely heavy hit" => 9,
+      "powerful strike" => 10,
+      "massive strike" => 11,
+      "awesome strike" => 12,
+      "vicious strike" => 13,
+      "earth-shaking strike" => 14,
+      "demolishing hit" => 15,
+      "spine-rattling strike" => 16,
+      "devastating hit" => 17,
+      "devastating hit (That'll leave a mark!)" => 18,
+      "overwhelming strike" => 19,
+      "obliterating hit" => 20,
+      "annihilating strike" => 21,
+      "cataclysmic strike" => 22,
+      "apocalyptic strike" => 23
+    }
+    
+    execute
+    
+    report
+  end
+  
+  def execute
+    @attack_count.times do 
+      bput(@attack_type,"Roundtime")
+      waitrt?
+      if Flags['attack_hit']
+        echo Flags['attack_hit']
+        Flags['attack_hit'][1]
+        strike_weight = @hit_map[Flags['attack_hit'][1]]
+        strike_weight = 0 if strike_weight.nil?
+        echo "*** Hit for #{strike_weight}"
+        @attack_damage << strike_weight
+        @hits = @hits + 1
+        Flags.reset('attack_hit')
+      end
+      if Flags['attack_miss']
+        echo "*** Miss"
+        @misses = @misses + 1
+        Flags.reset('attack_miss')
+      end
+      return if Flags['target_slain']
+    end
+  end
+  
+  def report
+    @attack_damage = [0] if @attack_damage.size==0        #Prevent divide by zero in report
+    
+    echo "******************** TEST COMPLETE ********************"
+    echo ""
+    echo "Attack: #{@attack_type}"
+    echo "Swings: #{@hits + @misses}"
+    echo "Weapon: #{@weapon}"
+    echo ""
+    echo "# Hits: #{@hits}"
+    echo "# Miss: #{@misses}"
+    echo "Hit %:  #{(100.0 * @hits / @attack_count).round(2)}"
+    echo "Min Hit: #{@attack_damage.min}"
+    echo "Max Hit: #{@attack_damage.max}"
+    echo "Avg Hit: #{(1.0 * @attack_damage.sum / @attack_damage.size).round(2)}"
+    echo "*******************************************************"
+  end
+end
+
+
+TestWeapon.new
+
+before_dying do
+  [ 'target_slain', 'attack_hit' ,'attack_miss' ].each { |flag| Flags.delete(flag) }
+end
